@@ -2,7 +2,6 @@ package protocol
 
 import (
 	"encoding/binary"
-	"fmt"
 	"sync"
 
 	"github.com/Fl0rencess720/suzuRPC/compressor"
@@ -33,14 +32,11 @@ func (h *Header) Mashall() []byte {
 	byteHeader := make([]byte, MaxHeaderSize+len(h.Method))
 	idx := 0
 	byteHeader[idx] = h.MagicNumber
-	fmt.Printf("byteHeader: %v\n", byteHeader)
 	idx++
 	// [idx:] 其实就是 [1:]
 	binary.LittleEndian.PutUint16(byteHeader[idx:], uint16(h.CompressType))
-	fmt.Printf("byteHeader: %v\n", byteHeader)
 	idx += Uint16Size
 	idx += putString(byteHeader[idx:], h.Method)
-	fmt.Printf("byteHeader: %v\n", byteHeader)
 	idx += binary.PutUvarint(byteHeader[idx:], h.ID)
 	idx += binary.PutUvarint(byteHeader[idx:], uint64(h.Len))
 	binary.LittleEndian.PutUint32(byteHeader[idx:], h.Checksum)
