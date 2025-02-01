@@ -44,10 +44,36 @@ func (h *Header) Mashall() []byte {
 	return byteHeader[:idx]
 }
 
-func putString(header []byte, s string) int {
+func (h *Header) Unmashall(data []byte) error {
+	h.Lock()
+	defer h.Unlock()
+	idx, size := 0, 0
+	h.CompressType = compressor.CompressType(binary.LittleEndian.Uint16(data[idx:]))
+	idx += Uint16Size
+	h.Method, size = readString(data[idx:])
+	idx += size
+	h.ID, size = binary.Uvarint(data[idx:])
+	idx += size
+	length, size := binary.Uvarint(data[idx:])
+	h.Len = uint32(length)
+	idx += size
+	h.Checksum = binary.LittleEndian.Uint32(data[idx:])
+	return nil
+}
+
+func putString(data []byte, s string) int {
 	idx := 0
-	idx += binary.PutUvarint(header, uint64(len(s)))
-	copy(header[idx:], s)
+	idx += binary.PutUvarint(data, uint64(len(s)))
+	copy(data[idx:], s)
 	idx += len(s)
 	return idx
+}
+
+func readString(data []byte) (string, int) {
+	idx := 0
+	length, size := binary.Uvarint(data)
+	idx += size
+	str := string(data[idx : idx+int(length)])
+	idx += len(str)
+	return str, idx
 }
