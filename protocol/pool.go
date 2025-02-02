@@ -15,3 +15,13 @@ func init() {
 		return &Header{}
 	}}
 }
+
+func (h *Header) Reset() {
+	h.MagicNumber = 0
+	h.Status = 0
+	h.CompressType = 0
+	h.Method = ""
+	h.ID = 0
+	h.Len = 0
+	h.Checksum = 0
+}

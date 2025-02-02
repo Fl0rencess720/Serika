@@ -17,6 +17,7 @@ const (
 type Header struct {
 	sync.RWMutex
 	MagicNumber  byte
+	Status       byte // 0: success, 1: fail
 	CompressType compressor.CompressType
 	Method       string
 	ID           uint64
@@ -37,7 +38,8 @@ func (h *Header) Mashall() []byte {
 	idx := 0
 	byteHeader[idx] = h.MagicNumber
 	idx++
-	// [idx:] 其实就是 [1:]
+	byteHeader[idx] = h.Status
+	idx++
 	binary.LittleEndian.PutUint16(byteHeader[idx:], uint16(h.CompressType))
 	idx += Uint16Size
 	idx += putString(byteHeader[idx:], h.Method)
@@ -53,6 +55,8 @@ func (h *Header) Unmashall(data []byte) error {
 	defer h.Unlock()
 	idx, size := 0, 0
 	h.MagicNumber = data[idx]
+	idx++
+	h.Status = data[idx]
 	idx++
 	h.CompressType = compressor.CompressType(binary.LittleEndian.Uint16(data[idx:]))
 	idx += Uint16Size

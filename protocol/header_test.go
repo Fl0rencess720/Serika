@@ -5,6 +5,7 @@ import "testing"
 func Test_HeaderMashall(t *testing.T) {
 	header := Header{
 		CompressType: 1,
+		Status:       0,
 		Method:       "love_taffy",
 		ID:           1883,
 		Len:          1023,
@@ -15,7 +16,7 @@ func Test_HeaderMashall(t *testing.T) {
 }
 
 func Test_Unmashall(t *testing.T) {
-	data := []byte{8, 1, 0, 10, 108, 111, 118, 101, 95, 116, 97, 102, 102, 121, 219, 14, 255, 7, 154, 2, 0, 0}
+	data := []byte{8, 0, 1, 0, 10, 108, 111, 118, 101, 95, 116, 97, 102, 102, 121, 219, 14, 255, 7, 154, 2, 0, 0}
 
 	var header Header
 	err := header.Unmashall(data)
@@ -24,6 +25,7 @@ func Test_Unmashall(t *testing.T) {
 	}
 	expectedHeader := Header{
 		MagicNumber:  magicNumber,
+		Status:       0,
 		CompressType: 1,
 		Method:       "love_taffy",
 		ID:           1883,
