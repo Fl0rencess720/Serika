@@ -9,9 +9,9 @@ import (
 
 const (
 	magicNumber   byte = 0x08
-	MaxHeaderSize      = 38
-	Uint32Size         = 4
-	Uint16Size         = 2
+	MaxHeaderSize int  = 38
+	Uint32Size    int  = 4
+	Uint16Size    int  = 2
 )
 
 type Header struct {
@@ -22,6 +22,10 @@ type Header struct {
 	ID           uint64
 	Len          uint32
 	Checksum     uint32
+}
+
+func GetMagicNumber() byte {
+	return magicNumber
 }
 
 func (h *Header) Mashall() []byte {
