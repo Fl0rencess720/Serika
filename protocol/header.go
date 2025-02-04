@@ -16,13 +16,14 @@ const (
 
 type Header struct {
 	sync.RWMutex
-	MagicNumber  byte
-	Status       byte // 0: success, 1: fail
-	CompressType compressor.CompressType
-	Method       string
-	ID           uint64
-	Len          uint32
-	Checksum     uint32
+	MagicNumber   byte
+	Status        byte // 0: success, 1: fail
+	CompressType  compressor.CompressType
+	ServicePath   string
+	ServiceMethod string
+	ID            uint64
+	PayloadLen    uint32
+	Checksum      uint32
 }
 
 func GetMagicNumber() byte {
@@ -34,7 +35,7 @@ func (h *Header) Mashall() []byte {
 	h.RLock()
 	defer h.RUnlock()
 	h.MagicNumber = magicNumber
-	byteHeader := make([]byte, MaxHeaderSize+len(h.Method))
+	byteHeader := make([]byte, MaxHeaderSize+len(h.ServiceMethod)+len(h.ServicePath))
 	idx := 0
 	byteHeader[idx] = h.MagicNumber
 	idx++
@@ -42,9 +43,10 @@ func (h *Header) Mashall() []byte {
 	idx++
 	binary.LittleEndian.PutUint16(byteHeader[idx:], uint16(h.CompressType))
 	idx += Uint16Size
-	idx += putString(byteHeader[idx:], h.Method)
+	idx += putString(byteHeader[idx:], h.ServiceMethod)
+	idx += putString(byteHeader[idx:], h.ServicePath)
 	idx += binary.PutUvarint(byteHeader[idx:], h.ID)
-	idx += binary.PutUvarint(byteHeader[idx:], uint64(h.Len))
+	idx += binary.PutUvarint(byteHeader[idx:], uint64(h.PayloadLen))
 	binary.LittleEndian.PutUint32(byteHeader[idx:], h.Checksum)
 	idx += Uint32Size
 	return byteHeader[:idx]
@@ -60,12 +62,14 @@ func (h *Header) Unmashall(data []byte) error {
 	idx++
 	h.CompressType = compressor.CompressType(binary.LittleEndian.Uint16(data[idx:]))
 	idx += Uint16Size
-	h.Method, size = readString(data[idx:])
+	h.ServiceMethod, size = readString(data[idx:])
+	idx += size
+	h.ServicePath, size = readString(data[idx:])
 	idx += size
 	h.ID, size = binary.Uvarint(data[idx:])
 	idx += size
 	length, size := binary.Uvarint(data[idx:])
-	h.Len = uint32(length)
+	h.PayloadLen = uint32(length)
 	idx += size
 	h.Checksum = binary.LittleEndian.Uint32(data[idx:])
 	return nil

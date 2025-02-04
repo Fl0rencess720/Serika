@@ -20,8 +20,9 @@ func (h *Header) Reset() {
 	h.MagicNumber = 0
 	h.Status = 0
 	h.CompressType = 0
-	h.Method = ""
+	h.ServiceMethod = ""
+	h.ServicePath = ""
 	h.ID = 0
-	h.Len = 0
+	h.PayloadLen = 0
 	h.Checksum = 0
 }
