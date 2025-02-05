@@ -6,23 +6,23 @@ import (
 	"github.com/Fl0rencess720/suzuRPC/serializer"
 )
 
-type CodecClient struct {
-	compressor compressor.Compressor
-	serializer serializer.Serializer
+type ClientCodec struct {
+	Compressor compressor.Compressor
+	Serializer serializer.Serializer
 }
 
-func NewCodecClient(compressor compressor.Compressor, serializer serializer.Serializer) *CodecClient {
-	return &CodecClient{
-		compressor: compressor,
-		serializer: serializer,
+func NewCodecClient(compressor compressor.Compressor, serializer serializer.Serializer) *ClientCodec {
+	return &ClientCodec{
+		Compressor: compressor,
+		Serializer: serializer,
 	}
 }
 
-func (c *CodecClient) EncodeRequest(h *protocol.Header, b *protocol.Body) ([]byte, error) {
+func (c *ClientCodec) EncodeRequest(h *protocol.Header, b *protocol.Body) ([]byte, error) {
 
 	return nil, nil
 }
 
-func (c *CodecClient) DecodeResponse(data []byte, v interface{}) error {
+func (c *ClientCodec) DecodeResponse(data []byte, v interface{}) error {
 	return nil
 }
