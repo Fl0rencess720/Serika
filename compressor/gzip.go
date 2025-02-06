@@ -10,3 +10,6 @@ func (c *GzipCompressor) Zip(data []byte) ([]byte, error) {
 func (c *GzipCompressor) Unzip(data []byte) ([]byte, error) {
 	return nil, nil
 }
+func (c *GzipCompressor) GetCompressorType() CompressType {
+	return Gzip
+}

@@ -18,13 +18,8 @@ func NewServerCodec(compressor compressor.Compressor, serializer serializer.Seri
 	}
 }
 
-func (c *ServerCodec) DecodeRequest(data []byte, h *protocol.Header, b *protocol.Body) error {
-	headerLen := data[0]
-	err := h.Unmarshall(data[1 : 1+headerLen])
-	if err != nil {
-		return err
-	}
-	payload, err := c.Compressor.Unzip(data[1+headerLen:])
+func (c *ServerCodec) DecodeRequestBody(data []byte, b *protocol.Body) error {
+	payload, err := c.Compressor.Unzip(data)
 	if err != nil {
 		return err
 	}

@@ -12,6 +12,7 @@ const (
 type Compressor interface {
 	Zip([]byte) ([]byte, error)
 	Unzip([]byte) ([]byte, error)
+	GetCompressorType() CompressType
 }
 
 var Compressors = map[CompressType]Compressor{

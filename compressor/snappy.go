@@ -10,3 +10,6 @@ func (c *SnappyCompressor) Zip(data []byte) ([]byte, error) {
 func (c *SnappyCompressor) Unzip(data []byte) ([]byte, error) {
 	return nil, nil
 }
+func (c *SnappyCompressor) GetCompressorType() CompressType {
+	return Snappy
+}

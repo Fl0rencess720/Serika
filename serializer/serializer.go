@@ -10,6 +10,7 @@ const (
 type Serializer interface {
 	Encode(interface{}) ([]byte, error)
 	Decode([]byte, interface{}) error
+	GetSerializerType() SerializerType
 }
 
 var Serializers = map[SerializerType]Serializer{

@@ -94,7 +94,12 @@ func (s *Server) handleConnection(conn net.Conn) {
 
 		header := protocol.RequestPool.Get().(*protocol.Header)
 		body := &protocol.Body{}
-		if err := s.codec.DecodeRequest(data[:n], header, body); err != nil {
+		headerLen, err := readRequestHeader(data[:n], header)
+		if err != nil {
+			return
+		}
+		s.codec = *codec.NewServerCodec(compressor.Compressors[header.CompressType], serializer.Serializers[header.SerializerType])
+		if err := s.codec.DecodeRequestBody(data[headerLen+1:n], body); err != nil {
 			return
 		}
 		response := s.handleRequest(header, body)
@@ -138,7 +143,7 @@ func (s *Server) handleRequest(header *protocol.Header, body *protocol.Body) []b
 	}
 
 	reply := reflect.New(replyType.Elem()).Interface()
-	if err := serializer.Serializers[serializer.JSON].Decode(body.Payload, args); err != nil {
+	if err := s.codec.Serializer.Decode(body.Payload, args); err != nil {
 		return encodeErrorResponse(s.codec, header.ID, fmt.Sprintf("decode error: %v", err))
 	}
 	results := methodValue.Call([]reflect.Value{
@@ -153,6 +158,15 @@ func (s *Server) handleRequest(header *protocol.Header, body *protocol.Body) []b
 		return encodeErrorResponse(s.codec, header.ID, err.Error())
 	}
 	return encodeSuccessResponse(s.codec, header.ID, reply)
+}
+
+func readRequestHeader(data []byte, h *protocol.Header) (byte, error) {
+	headerLen := data[0]
+	err := h.Unmarshall(data[1 : 1+headerLen])
+	if err != nil {
+		return 0, err
+	}
+	return headerLen, nil
 }
 
 func encodeErrorResponse(codec codec.ServerCodec, id uint64, errMsg string) []byte {
@@ -176,7 +190,7 @@ func encodeResponse(codec codec.ServerCodec, id uint64, reply interface{}, err e
 
 	body := &protocol.Body{}
 	if reply != nil {
-		data, _ := serializer.Serializers[serializer.JSON].Encode(reply)
+		data, _ := codec.Serializer.Encode(reply)
 		body.Payload = data
 	}
 	data, _ := codec.EncodeResponse(reply, header, body)

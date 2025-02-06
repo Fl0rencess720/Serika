@@ -121,6 +121,8 @@ func (c *Client) send(call *Call) {
 
 	header.ServiceMethod = call.ServiceMethod
 	header.ServicePath = call.ServicePath
+	header.CompressType = c.codec.Compressor.GetCompressorType()
+	header.SerializerType = c.codec.Serializer.GetSerializerType()
 	header.ID = seq
 	body := &protocol.Body{}
 	data, err := c.codec.EncodeRequest(call.Args, header, body)

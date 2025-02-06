@@ -17,3 +17,7 @@ func (s *JSONSerializer) Encode(v interface{}) ([]byte, error) {
 func (s *JSONSerializer) Decode(data []byte, v interface{}) error {
 	return json.Unmarshal(data, v)
 }
+
+func (s *JSONSerializer) GetSerializerType() SerializerType {
+	return JSON
+}
