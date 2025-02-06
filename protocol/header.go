@@ -30,7 +30,7 @@ func GetMagicNumber() byte {
 	return magicNumber
 }
 
-func (h *Header) Mashall() []byte {
+func (h *Header) Marshall() []byte {
 	// 加读锁，header只读状态
 	h.RLock()
 	defer h.RUnlock()
@@ -52,7 +52,7 @@ func (h *Header) Mashall() []byte {
 	return byteHeader[:idx]
 }
 
-func (h *Header) Unmashall(data []byte) error {
+func (h *Header) Unmarshall(data []byte) error {
 	h.Lock()
 	defer h.Unlock()
 	idx, size := 0, 0

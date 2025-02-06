@@ -12,7 +12,7 @@ func Test_HeaderMashall(t *testing.T) {
 		PayloadLen:    1023,
 		Checksum:      666,
 	}
-	res := header.Mashall()
+	res := header.Marshall()
 	t.Errorf("Marshalled Header: %v", res)
 }
 
@@ -20,7 +20,7 @@ func Test_Unmashall(t *testing.T) {
 	data := []byte{8, 0, 1, 0, 10, 108, 111, 118, 101, 95, 116, 97, 102, 102, 121, 219, 14, 255, 7, 154, 2, 0, 0}
 
 	var header Header
-	err := header.Unmashall(data)
+	err := header.Unmarshall(data)
 	if err != nil {
 		t.Fatalf("Unmashall failed: %v", err)
 	}

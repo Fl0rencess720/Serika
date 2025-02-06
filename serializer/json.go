@@ -1,12 +1,19 @@
 package serializer
 
+import "encoding/json"
+
 type JSONSerializer struct {
 }
 
 func (s *JSONSerializer) Encode(v interface{}) ([]byte, error) {
-	return nil, nil
+	data, err := json.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
+// v需要是指针类型
 func (s *JSONSerializer) Decode(data []byte, v interface{}) error {
-	return nil
+	return json.Unmarshal(data, v)
 }

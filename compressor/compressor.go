@@ -15,6 +15,7 @@ type Compressor interface {
 }
 
 var Compressors = map[CompressType]Compressor{
+	Raw:    &RawCompressor{},
 	Gzip:   &GzipCompressor{},
 	Snappy: &SnappyCompressor{},
 	Zlib:   &ZlibCompressor{},

@@ -1,18 +1,18 @@
 package serializer
 
-type Serializer uint8
+type SerializerType uint8
 
 const (
-	JSON Serializer = iota
+	JSON SerializerType = iota
 	PROTOBUF
 )
 
-type Serialize interface {
+type Serializer interface {
 	Encode(interface{}) ([]byte, error)
 	Decode([]byte, interface{}) error
 }
 
-var Serializers = map[Serializer]Serialize{
+var Serializers = map[SerializerType]Serializer{
 	JSON:     &JSONSerializer{},
 	PROTOBUF: &ProtobufSerializer{},
 }

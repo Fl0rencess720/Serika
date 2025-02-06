@@ -3,6 +3,7 @@ package client
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"sync"
 	"time"
@@ -22,6 +23,7 @@ type Call struct {
 	Reply         any        // The reply from the function (*struct).
 	Error         error      // After completion, the error status.
 	Done          chan *Call // Receives *Call when Go is complete.
+	Metadata      map[string]string
 }
 
 type Client struct {
@@ -42,7 +44,7 @@ type Option func(o *options)
 
 type options struct {
 	comprressor compressor.CompressType
-	serializer  serializer.Serializer
+	serializer  serializer.SerializerType
 	dialTimeout time.Duration
 }
 
@@ -52,7 +54,7 @@ func WithCompressor(c compressor.CompressType) Option {
 	}
 }
 
-func WithSerializer(s serializer.Serializer) Option {
+func WithSerializer(s serializer.SerializerType) Option {
 	return func(o *options) {
 		o.serializer = s
 	}
@@ -76,9 +78,9 @@ func NewClient(network, address string, opts ...Option) (*Client, error) {
 	for _, opt := range opts {
 		opt(&options)
 	}
-	c.codec.Compressor = compressor.Compressors[options.comprressor]
-	c.codec.Serializer = serializer.Serializer(options.serializer)
+	c.codec = *codec.NewClientCodec(compressor.Compressors[options.comprressor], serializer.Serializers[options.serializer])
 	c.DialTimeout = options.dialTimeout
+	// go c.input()
 	return &c, nil
 }
 
@@ -119,8 +121,9 @@ func (c *Client) send(call *Call) {
 
 	header.ServiceMethod = call.ServiceMethod
 	header.ServicePath = call.ServicePath
+	header.ID = seq
 	body := &protocol.Body{}
-	data, err := c.codec.EncodeRequest(header, body)
+	data, err := c.codec.EncodeRequest(call.Args, header, body)
 	if err != nil {
 		c.mutex.Lock()
 		call = c.pending[seq]
@@ -162,8 +165,73 @@ func (c *Client) send(call *Call) {
 func (c *Client) input() {
 	var err error
 	for err == nil {
+		header := protocol.ResponsePool.Get().(*protocol.Header)
+		body := &protocol.Body{}
+		var data []byte
+		_, err = c.Conn.Read(data)
+		if err != nil {
+			continue
+		}
+		err = c.codec.DecodeResponse(data, header, body)
+		if err != nil {
+			continue
+		}
+		c.mutex.Lock()
+		call, ok := c.pending[header.ID]
+		if ok {
+			delete(c.pending, header.ID)
+		}
+		c.mutex.Unlock()
 
+		if !ok {
+			continue
+		}
+
+		if header.Status != 0 {
+			call.Error = errors.New("rpc error: " + string(header.Status))
+		} else {
+			if len(body.Payload) > 0 {
+				err = c.codec.Serializer.Decode(body.Payload, call.Reply)
+				if err != nil {
+					call.Error = fmt.Errorf("decode data failed: %v", err)
+				}
+			}
+		}
+		call.Metadata = body.Metadata
+		header.Reset()
+		protocol.ResponsePool.Put(header)
+		call.done()
 	}
+
+	c.mutex.Lock()
+	c.shutdown = true
+	closing := c.closing
+	c.Conn.Close()
+	err = handleNetError(err, closing)
+
+	for _, call := range c.pending {
+		call.Error = err
+		call.done()
+	}
+	c.pending = nil
+	c.mutex.Unlock()
+}
+
+// 处理网络错误
+func handleNetError(err error, closing bool) error {
+	if e, ok := err.(*net.OpError); ok {
+		if e.Err != nil {
+			return fmt.Errorf("net.OpError: %s", e.Err.Error())
+		}
+		return errors.New("net.OpError")
+	}
+	if err == io.EOF {
+		if closing {
+			return ErrShutdown
+		}
+		return io.ErrUnexpectedEOF
+	}
+	return err
 }
 
 func (call *Call) done() {
