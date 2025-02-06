@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Fl0rencess720/suzuRPC/codec"
-	"github.com/Fl0rencess720/suzuRPC/compressor"
-	"github.com/Fl0rencess720/suzuRPC/protocol"
-	"github.com/Fl0rencess720/suzuRPC/serializer"
+	"github.com/Fl0rencess720/Serika/codec"
+	"github.com/Fl0rencess720/Serika/compressor"
+	"github.com/Fl0rencess720/Serika/protocol"
+	"github.com/Fl0rencess720/Serika/serializer"
 )
 
 var ErrShutdown = errors.New("connection is shut down")

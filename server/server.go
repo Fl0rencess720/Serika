@@ -6,11 +6,16 @@ import (
 	"net"
 	"reflect"
 	"sync"
+	"time"
 
-	"github.com/Fl0rencess720/suzuRPC/codec"
-	"github.com/Fl0rencess720/suzuRPC/compressor"
-	"github.com/Fl0rencess720/suzuRPC/protocol"
-	"github.com/Fl0rencess720/suzuRPC/serializer"
+	"github.com/Fl0rencess720/Serika/codec"
+	"github.com/Fl0rencess720/Serika/compressor"
+	"github.com/Fl0rencess720/Serika/protocol"
+	"github.com/Fl0rencess720/Serika/serializer"
+)
+
+var (
+	ErrServiceAlreadyRegistered = errors.New("service already registered")
 )
 
 type Server struct {
@@ -20,9 +25,34 @@ type Server struct {
 	mutex    sync.Mutex
 }
 
+type Option func(o *options)
+
+type options struct {
+	comprressor compressor.CompressType
+	serializer  serializer.SerializerType
+	dialTimeout time.Duration
+}
+
 func NewServer() *Server {
 	return &Server{
 		services: make(map[string]reflect.Value),
+	}
+}
+
+func WithCompressor(c compressor.CompressType) Option {
+	return func(o *options) {
+		o.comprressor = c
+	}
+}
+
+func WithSerializer(s serializer.SerializerType) Option {
+	return func(o *options) {
+		o.serializer = s
+	}
+}
+func WithDialTimeout(t time.Duration) Option {
+	return func(o *options) {
+		o.dialTimeout = t
 	}
 }
 
@@ -30,7 +60,7 @@ func (s *Server) Register(serviceName string, service interface{}) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	if _, exists := s.services[serviceName]; exists {
-		return errors.New("service already registered")
+		return ErrServiceAlreadyRegistered
 	}
 	s.services[serviceName] = reflect.ValueOf(service)
 	return nil
@@ -55,11 +85,6 @@ func (s *Server) Serve(network, address string) error {
 
 func (s *Server) handleConnection(conn net.Conn) {
 	defer conn.Close()
-	s.codec = codec.ServerCodec{
-		Compressor: compressor.Compressors[compressor.Raw],
-		Serializer: serializer.Serializers[serializer.JSON],
-	}
-
 	for {
 		data := make([]byte, 4096)
 		n, err := conn.Read(data)

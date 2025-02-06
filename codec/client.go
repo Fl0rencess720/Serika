@@ -1,9 +1,9 @@
 package codec
 
 import (
-	"github.com/Fl0rencess720/suzuRPC/compressor"
-	"github.com/Fl0rencess720/suzuRPC/protocol"
-	"github.com/Fl0rencess720/suzuRPC/serializer"
+	"github.com/Fl0rencess720/Serika/compressor"
+	"github.com/Fl0rencess720/Serika/protocol"
+	"github.com/Fl0rencess720/Serika/serializer"
 )
 
 type ClientCodec struct {

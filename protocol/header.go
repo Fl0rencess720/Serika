@@ -4,7 +4,8 @@ import (
 	"encoding/binary"
 	"sync"
 
-	"github.com/Fl0rencess720/suzuRPC/compressor"
+	"github.com/Fl0rencess720/Serika/compressor"
+	"github.com/Fl0rencess720/Serika/serializer"
 )
 
 const (
@@ -16,14 +17,15 @@ const (
 
 type Header struct {
 	sync.RWMutex
-	MagicNumber   byte
-	Status        byte // 0: success, 1: fail
-	CompressType  compressor.CompressType
-	ServicePath   string
-	ServiceMethod string
-	ID            uint64
-	PayloadLen    uint32
-	Checksum      uint32
+	MagicNumber    byte
+	Status         byte // 0: success, 1: fail
+	CompressType   compressor.CompressType
+	SerializerType serializer.SerializerType
+	ServicePath    string
+	ServiceMethod  string
+	ID             uint64
+	PayloadLen     uint32
+	Checksum       uint32
 }
 
 func GetMagicNumber() byte {
@@ -43,6 +45,8 @@ func (h *Header) Marshall() []byte {
 	idx++
 	binary.LittleEndian.PutUint16(byteHeader[idx:], uint16(h.CompressType))
 	idx += Uint16Size
+	binary.LittleEndian.PutUint16(byteHeader[idx:], uint16(h.SerializerType))
+	idx += Uint16Size
 	idx += putString(byteHeader[idx:], h.ServiceMethod)
 	idx += putString(byteHeader[idx:], h.ServicePath)
 	idx += binary.PutUvarint(byteHeader[idx:], h.ID)
@@ -61,6 +65,8 @@ func (h *Header) Unmarshall(data []byte) error {
 	h.Status = data[idx]
 	idx++
 	h.CompressType = compressor.CompressType(binary.LittleEndian.Uint16(data[idx:]))
+	idx += Uint16Size
+	h.SerializerType = serializer.SerializerType(binary.LittleEndian.Uint16(data[idx:]))
 	idx += Uint16Size
 	h.ServiceMethod, size = readString(data[idx:])
 	idx += size

@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/Fl0rencess720/suzuRPC/client"
-	"github.com/Fl0rencess720/suzuRPC/compressor"
-	"github.com/Fl0rencess720/suzuRPC/serializer"
+	"github.com/Fl0rencess720/Serika/client"
+	"github.com/Fl0rencess720/Serika/compressor"
+	"github.com/Fl0rencess720/Serika/serializer"
 )
 
 type Args struct {

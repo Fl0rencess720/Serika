@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/Fl0rencess720/suzuRPC/server"
+	"github.com/Fl0rencess720/Serika/server"
 )
 
 type Args struct {
