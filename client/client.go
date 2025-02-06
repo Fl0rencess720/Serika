@@ -80,7 +80,7 @@ func NewClient(network, address string, opts ...Option) (*Client, error) {
 	}
 	c.codec = *codec.NewClientCodec(compressor.Compressors[options.comprressor], serializer.Serializers[options.serializer])
 	c.DialTimeout = options.dialTimeout
-	// go c.input()
+	go c.input()
 	return &c, nil
 }
 
@@ -167,12 +167,13 @@ func (c *Client) input() {
 	for err == nil {
 		header := protocol.ResponsePool.Get().(*protocol.Header)
 		body := &protocol.Body{}
-		var data []byte
-		_, err = c.Conn.Read(data)
+		data := make([]byte, 4096)
+		n, err := c.Conn.Read(data)
 		if err != nil {
 			continue
 		}
-		err = c.codec.DecodeResponse(data, header, body)
+		fmt.Printf("len(data): %v\n", len(data[:n]))
+		err = c.codec.DecodeResponse(data[:n], header, body)
 		if err != nil {
 			continue
 		}

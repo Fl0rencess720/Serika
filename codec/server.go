@@ -44,5 +44,6 @@ func (c *ServerCodec) EncodeResponse(args interface{}, h *protocol.Header, b *pr
 		return nil, err
 	}
 	data := append(byteHeader, zippedPayload...)
+	data = append([]byte{byte(len(byteHeader))}, data...)
 	return data, nil
 }

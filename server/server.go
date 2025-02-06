@@ -73,7 +73,10 @@ func (s *Server) handleConnection(conn net.Conn) {
 			return
 		}
 		response := s.handleRequest(header, body)
-		conn.Write(response)
+		_, err = conn.Write(response)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
 	}
 }
 
