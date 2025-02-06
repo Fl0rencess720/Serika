@@ -168,11 +168,11 @@ func (c *Client) input() {
 		header := protocol.ResponsePool.Get().(*protocol.Header)
 		body := &protocol.Body{}
 		data := make([]byte, 4096)
-		n, err := c.Conn.Read(data)
+		var n int
+		n, err = c.Conn.Read(data)
 		if err != nil {
 			continue
 		}
-		fmt.Printf("len(data): %v\n", len(data[:n]))
 		err = c.codec.DecodeResponse(data[:n], header, body)
 		if err != nil {
 			continue

@@ -13,7 +13,7 @@ func (s *JSONSerializer) Encode(v interface{}) ([]byte, error) {
 	return data, nil
 }
 
-// v需要是指针类型
+// v当前需要是指针类型
 func (s *JSONSerializer) Decode(data []byte, v interface{}) error {
 	return json.Unmarshal(data, v)
 }
