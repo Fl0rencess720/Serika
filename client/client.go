@@ -28,18 +28,16 @@ type Call struct {
 }
 
 type Client struct {
-	codec codec.ClientCodec
+	options options
 
-	Conn        net.Conn
-	DialTimeout time.Duration
+	codec codec.ClientCodec
+	Conn  net.Conn
 
 	mutex    sync.Mutex // protects following
 	seq      uint64
 	pending  map[uint64]*Call
 	closing  bool // user has called Close
 	shutdown bool // server has told us to stop
-
-	TLSConfig *tls.Config
 }
 
 type Option func(o *options)
@@ -87,8 +85,7 @@ func NewClient(network, address string, opts ...Option) (*Client, error) {
 		opt(&options)
 	}
 	c.codec = *codec.NewClientCodec(compressor.Compressors[options.comprressor], serializer.Serializers[options.serializer])
-	c.DialTimeout = options.dialTimeout
-	c.TLSConfig = options.TLSConfig
+	c.options = options
 	// 后连接
 	if err := c.connect(network, address); err != nil {
 		return nil, err
