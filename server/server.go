@@ -20,12 +20,19 @@ var (
 )
 
 type Server struct {
+	Metadata Metadata
 	codec    codec.ServerCodec
 	ln       net.Listener
 	services map[string]reflect.Value
 	mutex    sync.Mutex
 
 	Options options
+}
+
+type Metadata struct {
+	Name    string
+	Network string
+	Address string
 }
 
 type Option func(o *options)
@@ -38,8 +45,9 @@ type options struct {
 	TLSConfig *tls.Config
 }
 
-func NewServer(opts ...Option) *Server {
+func NewServer(name string, opts ...Option) *Server {
 	s := &Server{
+		Metadata: Metadata{Name: name},
 		services: make(map[string]reflect.Value),
 	}
 	options := options{}
@@ -84,6 +92,8 @@ func (s *Server) Register(serviceName string, service interface{}) error {
 }
 
 func (s *Server) Serve(network, address string) error {
+	s.Metadata.Network = network
+	s.Metadata.Address = address
 	ln, err := s.makeListener(network, address)
 	if err != nil {
 		return fmt.Errorf("failed to listen: %v", err)
@@ -93,6 +103,7 @@ func (s *Server) Serve(network, address string) error {
 	s.ln = ln
 	for {
 		conn, err := s.ln.Accept()
+		fmt.Println("hello")
 		if err != nil {
 			continue
 		}
@@ -107,10 +118,8 @@ func (s *Server) handleConnection(conn net.Conn) {
 		data := make([]byte, 4096)
 		n, err := conn.Read(data)
 		if err != nil {
-			fmt.Printf("err: %v\n", err)
 			return
 		}
-
 		header := protocol.RequestPool.Get().(*protocol.Header)
 		body := &protocol.Body{}
 		headerLen, err := readRequestHeader(data[:n], header)

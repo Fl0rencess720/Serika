@@ -68,7 +68,6 @@ func WithDialTimeout(t time.Duration) Option {
 
 func WithTLSConfig(c *tls.Config) Option {
 	return func(o *options) {
-
 		o.TLSConfig = c
 	}
 }
@@ -79,7 +78,7 @@ func NewClient(network, address string, opts ...Option) (*Client, error) {
 		comprressor: compressor.Raw,
 		serializer:  serializer.PROTOBUF,
 		dialTimeout: 10 * time.Second,
-		TLSConfig:   &tls.Config{InsecureSkipVerify: true},
+		TLSConfig:   nil,
 	}
 	for _, opt := range opts {
 		opt(&options)
@@ -97,7 +96,6 @@ func NewClient(network, address string, opts ...Option) (*Client, error) {
 func (c *Client) Call(servicePath, serviceMethod string, args interface{}, reply interface{}) error {
 	call := <-c.Go(servicePath, serviceMethod, args, reply, make(chan *Call, 10)).Done
 	return call.Error
-
 }
 
 func (c *Client) Go(servicePath, serviceMethod string, args interface{}, reply interface{}, done chan *Call) *Call {
