@@ -1,6 +1,7 @@
 package client
 
 import (
+	"crypto/tls"
 	"net"
 )
 
@@ -14,9 +15,13 @@ func (c *Client) connect(network, address string) error {
 }
 
 func newTCPConn(c *Client, network, address string) (net.Conn, error) {
-	conn, err := net.DialTimeout(network, address, c.DialTimeout)
-	if err != nil {
-		return nil, err
+	if c.TLSConfig != nil {
+		dialer := &net.Dialer{Timeout: c.DialTimeout}
+		tlsConn, err := tls.DialWithDialer(dialer, network, address, c.TLSConfig)
+		if err != nil {
+			return nil, err
+		}
+		return tlsConn, nil
 	}
-	return conn, nil
+	return net.DialTimeout(network, address, c.DialTimeout)
 }

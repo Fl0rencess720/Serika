@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 
 	"github.com/Fl0rencess720/Serika/client"
@@ -17,7 +18,11 @@ type Reply struct {
 }
 
 func main() {
-	client, err := client.NewClient("tcp", "127.0.0.1:9001", client.WithCompressor(compressor.Raw), client.WithSerializer(serializer.JSON))
+	client, err := client.NewClient("tcp", "127.0.0.1:9001",
+		client.WithCompressor(compressor.Raw),
+		client.WithSerializer(serializer.JSON),
+		client.WithTLSConfig(&tls.Config{InsecureSkipVerify: true}),
+	)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}

@@ -1,6 +1,7 @@
 package client
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
@@ -38,6 +39,7 @@ type Client struct {
 	closing  bool // user has called Close
 	shutdown bool // server has told us to stop
 
+	TLSConfig *tls.Config
 }
 
 type Option func(o *options)
@@ -46,6 +48,7 @@ type options struct {
 	comprressor compressor.CompressType
 	serializer  serializer.SerializerType
 	dialTimeout time.Duration
+	TLSConfig   *tls.Config
 }
 
 func WithCompressor(c compressor.CompressType) Option {
@@ -65,21 +68,31 @@ func WithDialTimeout(t time.Duration) Option {
 	}
 }
 
+func WithTLSConfig(c *tls.Config) Option {
+	return func(o *options) {
+
+		o.TLSConfig = c
+	}
+}
+
 func NewClient(network, address string, opts ...Option) (*Client, error) {
 	c := Client{}
-	if err := c.connect(network, address); err != nil {
-		return nil, err
-	}
 	options := options{
 		comprressor: compressor.Raw,
 		serializer:  serializer.PROTOBUF,
 		dialTimeout: 10 * time.Second,
+		TLSConfig:   &tls.Config{InsecureSkipVerify: true},
 	}
 	for _, opt := range opts {
 		opt(&options)
 	}
 	c.codec = *codec.NewClientCodec(compressor.Compressors[options.comprressor], serializer.Serializers[options.serializer])
 	c.DialTimeout = options.dialTimeout
+	c.TLSConfig = options.TLSConfig
+	// 后连接
+	if err := c.connect(network, address); err != nil {
+		return nil, err
+	}
 	go c.input()
 	return &c, nil
 }

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net"
@@ -23,6 +24,8 @@ type Server struct {
 	ln       net.Listener
 	services map[string]reflect.Value
 	mutex    sync.Mutex
+
+	Options options
 }
 
 type Option func(o *options)
@@ -31,12 +34,20 @@ type options struct {
 	comprressor compressor.CompressType
 	serializer  serializer.SerializerType
 	dialTimeout time.Duration
+
+	TLSConfig *tls.Config
 }
 
-func NewServer() *Server {
-	return &Server{
+func NewServer(opts ...Option) *Server {
+	s := &Server{
 		services: make(map[string]reflect.Value),
 	}
+	options := options{}
+	for _, opt := range opts {
+		opt(&options)
+	}
+	s.Options = options
+	return s
 }
 
 func WithCompressor(c compressor.CompressType) Option {
@@ -56,6 +67,12 @@ func WithDialTimeout(t time.Duration) Option {
 	}
 }
 
+func WithTLSConfig(c *tls.Config) Option {
+	return func(o *options) {
+		o.TLSConfig = c
+	}
+}
+
 func (s *Server) Register(serviceName string, service interface{}) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -67,7 +84,7 @@ func (s *Server) Register(serviceName string, service interface{}) error {
 }
 
 func (s *Server) Serve(network, address string) error {
-	ln, err := net.Listen(network, address)
+	ln, err := s.makeListener(network, address)
 	if err != nil {
 		return fmt.Errorf("failed to listen: %v", err)
 	}
@@ -75,7 +92,7 @@ func (s *Server) Serve(network, address string) error {
 
 	s.ln = ln
 	for {
-		conn, err := ln.Accept()
+		conn, err := s.ln.Accept()
 		if err != nil {
 			continue
 		}
@@ -85,10 +102,12 @@ func (s *Server) Serve(network, address string) error {
 
 func (s *Server) handleConnection(conn net.Conn) {
 	defer conn.Close()
+
 	for {
 		data := make([]byte, 4096)
 		n, err := conn.Read(data)
 		if err != nil {
+			fmt.Printf("err: %v\n", err)
 			return
 		}
 
@@ -98,10 +117,12 @@ func (s *Server) handleConnection(conn net.Conn) {
 		if err != nil {
 			return
 		}
+
 		s.codec = *codec.NewServerCodec(compressor.Compressors[header.CompressType], serializer.Serializers[header.SerializerType])
 		if err := s.codec.DecodeRequestBody(data[headerLen+1:n], body); err != nil {
 			return
 		}
+
 		response := s.handleRequest(header, body)
 		_, err = conn.Write(response)
 		if err != nil {
