@@ -30,6 +30,7 @@ type Server struct {
 }
 
 type Metadata struct {
+	ID      string
 	Name    string
 	Network string
 	Address string
@@ -45,9 +46,9 @@ type options struct {
 	TLSConfig *tls.Config
 }
 
-func NewServer(name string, opts ...Option) *Server {
+func NewServer(name, ID string, opts ...Option) *Server {
 	s := &Server{
-		Metadata: Metadata{Name: name},
+		Metadata: Metadata{Name: name, ID: ID},
 		services: make(map[string]reflect.Value),
 	}
 	options := options{}

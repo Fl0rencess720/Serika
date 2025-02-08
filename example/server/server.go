@@ -35,7 +35,7 @@ func NewRegistrar(consulAddress string) (registry.ServiceRegister, error) {
 }
 
 func main() {
-	addr := "127.0.0.1:9002"
+	addr := "127.0.0.1:9004"
 	consulAddr := "127.0.0.1:8500"
 
 	registrar, err := NewRegistrar(consulAddr)
@@ -53,8 +53,8 @@ func main() {
 	// server := server.NewServer("example", server.WithTLSConfig(
 	// 	&tls.Config{Certificates: []tls.Certificate{cert}}),
 	// )
-	server := server.NewServer("example")
-	server.Metadata.Address = "127.0.0.1:9002"
+	server := server.NewServer("test", "test02")
+	server.Metadata.Address = addr
 	// 注册服务
 	if err = registrar.Register(context.Background(), server); err != nil {
 		fmt.Printf("err: %v\n", err)
@@ -67,7 +67,7 @@ func main() {
 		return
 	}
 
-	fmt.Println("start server on 127.0.0.1:9002......")
+	fmt.Printf("start server on %s......", addr)
 
 	err = server.Serve("tcp", addr)
 	if err != nil {

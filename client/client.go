@@ -30,9 +30,8 @@ type Call struct {
 type Client struct {
 	options options
 
-	codec codec.ClientCodec
-	Conn  net.Conn
-
+	codec    codec.ClientCodec
+	Conn     net.Conn
 	mutex    sync.Mutex // protects following
 	seq      uint64
 	pending  map[uint64]*Call

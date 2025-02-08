@@ -6,6 +6,7 @@ import (
 	"github.com/Fl0rencess720/Serika/client"
 	"github.com/Fl0rencess720/Serika/compressor"
 	"github.com/Fl0rencess720/Serika/registry"
+	"github.com/Fl0rencess720/Serika/selector"
 	"github.com/Fl0rencess720/Serika/serializer"
 	consulAPI "github.com/hashicorp/consul/api"
 )
@@ -34,7 +35,14 @@ func main() {
 		fmt.Printf("err: %v\n", err)
 		return
 	}
-	metadata, err := discovery.DiscoveryWithHeathCheck("example", nil)
+	ms, err := discovery.DiscoveryWithHeathCheck("test", nil)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+		return
+	}
+	fmt.Printf("ms: %v\n", ms)
+	selector := selector.NewSelector(selector.RoundRobin, ms)
+	metadata, err := selector.SelectService("127.0.0.1")
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 		return

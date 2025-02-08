@@ -7,5 +7,5 @@ import (
 
 type ServiceDiscovery interface {
 	Discovery(serviceID string, o *consulAPI.QueryOptions) (*server.Metadata, error)
-	DiscoveryWithHeathCheck(serviceID string, o *consulAPI.QueryOptions) (*server.Metadata, error)
+	DiscoveryWithHeathCheck(serviceID string, o *consulAPI.QueryOptions) ([]*server.Metadata, error)
 }

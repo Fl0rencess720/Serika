@@ -23,12 +23,12 @@ func (r *ConsulServiceRegister) Register(ctx context.Context, server *server.Ser
 		return err
 	}
 	registration := &consulAPI.AgentServiceRegistration{
-		ID:      server.Metadata.Name,
+		ID:      server.Metadata.ID,
 		Name:    server.Metadata.Name,
 		Address: address,
 		Port:    port,
 		Check: &consulAPI.AgentServiceCheck{
-			CheckID:                        "service:" + server.Metadata.Name,
+			CheckID:                        "service:" + server.Metadata.ID,
 			TTL:                            "15s",
 			DeregisterCriticalServiceAfter: "60s",
 		},
@@ -38,14 +38,14 @@ func (r *ConsulServiceRegister) Register(ctx context.Context, server *server.Ser
 	}
 	// 启动TTL心跳
 	go func() {
-		err := r.UpdateTTL("service:" + server.Metadata.Name)
+		err := r.UpdateTTL("service:" + server.Metadata.ID)
 		if err != nil {
 			fmt.Printf("err: %v\n", err)
 		}
 		ticker := time.NewTicker(5 * time.Second) // 每 5s 发送一次心跳
 		defer ticker.Stop()
 		for range ticker.C {
-			err := r.UpdateTTL("service:" + server.Metadata.Name)
+			err := r.UpdateTTL("service:" + server.Metadata.ID)
 			if err != nil {
 				fmt.Printf("err: %v\n", err)
 			}
@@ -77,10 +77,14 @@ func (c *ConsulServiceDiscovery) Discovery(serviceID string, o *consulAPI.QueryO
 	return &server.Metadata{Name: service.ID, Address: fmt.Sprintf("%s:%d", service.Address, service.Port), Network: "tcp"}, nil
 }
 
-func (c *ConsulServiceDiscovery) DiscoveryWithHeathCheck(serviceID string, o *consulAPI.QueryOptions) (*server.Metadata, error) {
+func (c *ConsulServiceDiscovery) DiscoveryWithHeathCheck(serviceID string, o *consulAPI.QueryOptions) ([]*server.Metadata, error) {
 	service, _, err := c.ConsulClient.Health().Service(serviceID, "", true, nil)
 	if err != nil {
 		return nil, err
 	}
-	return &server.Metadata{Name: service[0].Service.ID, Address: fmt.Sprintf("%s:%d", service[0].Service.Address, service[0].Service.Port), Network: "tcp"}, nil
+	ms := []*server.Metadata{}
+	for _, srv := range service {
+		ms = append(ms, &server.Metadata{Name: service[0].Service.ID, Address: fmt.Sprintf("%s:%d", srv.Service.Address, srv.Service.Port), Network: "tcp"})
+	}
+	return ms, nil
 }
